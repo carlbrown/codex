@@ -63,12 +63,6 @@ interface IDTokenClaims {
   };
 }
 
-interface AccessTokenClaims {
-  "https://api.openai.com/auth": {
-    chatgpt_plan_type: string;
-  };
-}
-
 function generatePKCECodes(): {
   code_verifier: string;
   code_challenge: string;
@@ -339,25 +333,6 @@ async function handleCallback(
     throw new Error("Invalid access token");
   }
 
-  const idTokenClaims = JSON.parse(
-    Buffer.from(idTokenParts[1]!, "base64url").toString("utf8"),
-  ) as IDTokenClaims;
-
-  const accessTokenClaims = JSON.parse(
-    Buffer.from(accessTokenParts[1]!, "base64url").toString("utf8"),
-  ) as AccessTokenClaims;
-
-  const org_id = idTokenClaims["https://api.openai.com/auth"]?.organization_id;
-
-  if (!org_id) {
-    throw new Error("Missing organization in id_token claims");
-  }
-  const project_id = idTokenClaims["https://api.openai.com/auth"]?.project_id;
-
-  if (!project_id) {
-    throw new Error("Missing project in id_token claims");
-  }
-
   const randomId = crypto.randomBytes(6).toString("hex");
   const exchangeParams = new URLSearchParams({
     grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
@@ -390,15 +365,7 @@ async function handleCallback(
   // Determine whether the organization still requires additional
   // setup (e.g., adding a payment method) based on the ID-token
   // claim provided by the auth service.
-  const completedOnboarding = Boolean(
-    idTokenClaims["https://api.openai.com/auth"]?.completed_platform_onboarding,
-  );
-  const chatgptPlanType =
-    accessTokenClaims["https://api.openai.com/auth"]?.chatgpt_plan_type;
-  const isOrgOwner = Boolean(
-    idTokenClaims["https://api.openai.com/auth"]?.is_org_owner,
-  );
-  const needsSetup = !completedOnboarding && isOrgOwner;
+  const needsSetup = false;
 
   // Build the success URL on the same host/port as the callback and
   // include the required query parameters for the front-end page.
@@ -711,7 +678,6 @@ async function signInFlow(issuer: string, clientId: string): Promise<string> {
         );
         authUrl.searchParams.append("code_challenge", pkce.code_challenge);
         authUrl.searchParams.append("code_challenge_method", "S256");
-        authUrl.searchParams.append("id_token_add_organizations", "true");
         authUrl.searchParams.append("state", state);
 
         // Open the browser immediately.

@@ -259,14 +259,6 @@ class _ApiKeyHTTPHandler(http.server.BaseHTTPRequestHandler):
         token_claims = id_token_claims.get("https://api.openai.com/auth", {})
         access_claims = access_token_claims.get("https://api.openai.com/auth", {})
 
-        org_id = token_claims.get("organization_id")
-        if not org_id:
-            raise ValueError("Missing organization in id_token claims")
-
-        project_id = token_claims.get("project_id")
-        if not project_id:
-            raise ValueError("Missing project in id_token claims")
-
         random_id = secrets.token_hex(6)
 
         # 2. Token exchange to obtain API key
@@ -297,10 +289,7 @@ class _ApiKeyHTTPHandler(http.server.BaseHTTPRequestHandler):
         # Determine whether the organization still requires additional
         # setup (e.g., adding a payment method) based on the ID-token
         # claim provided by the auth service.
-        completed_onboarding = token_claims.get("completed_platform_onboarding") == True
-        chatgpt_plan_type = access_claims.get("chatgpt_plan_type")
-        is_org_owner = token_claims.get("is_org_owner") == True
-        needs_setup = not completed_onboarding and is_org_owner
+        needs_setup = False
 
         # Build the success URL on the same host/port as the callback and
         # include the required query parameters for the front-end page.
@@ -429,7 +418,6 @@ class _ApiKeyHTTPServer(http.server.HTTPServer):
             "scope": "openid profile email offline_access",
             "code_challenge": self.pkce.code_challenge,
             "code_challenge_method": "S256",
-            "id_token_add_organizations": "true",
             "state": self.state,
         }
         return f"{self.issuer}/oauth/authorize?" + urllib.parse.urlencode(params)

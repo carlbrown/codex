@@ -72,8 +72,6 @@ export const AZURE_OPENAI_API_VERSION =
   process.env["AZURE_OPENAI_API_VERSION"] || "2025-04-01-preview";
 
 export const DEFAULT_REASONING_EFFORT = "high";
-export const OPENAI_ORGANIZATION = process.env["OPENAI_ORGANIZATION"] || "";
-export const OPENAI_PROJECT = process.env["OPENAI_PROJECT"] || "";
 
 // Can be set `true` when Codex is running in an environment that is marked as already
 // considered sufficiently locked-down so that we allow running without an explicit sandbox.
